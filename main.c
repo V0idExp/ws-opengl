@@ -143,8 +143,8 @@ init_gl(void)
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 
 	// read and compile shaders into a shader program
-	char *vert_src = read_file("data/simple.vert");
-	char *frag_src = read_file("data/simple.frag");
+	char *vert_src = read_file("data/color.vert");
+	char *frag_src = read_file("data/color.frag");
 	if (vert_src && frag_src) {
 		shader = compile_shaders(vert_src, frag_src);
 	}
@@ -157,9 +157,10 @@ init_gl(void)
 
 	// create, bind and fill with data a Vertex Buffer Object
 	GLfloat vertices[] = {
-		-0.3, -0.3, 0.0,
-		+0.3, -0.3, 0.0,
-		 0.0,  0.3, 0.0,
+		// vertex         // color
+		-0.3, -0.3, 0.0,  1.0, 0.0, 0.0,
+		+0.3, -0.3, 0.0,  0.0, 1.0, 0.0,
+		 0.0,  0.3, 0.0,  0.0, 0.0, 1.0,
 	};
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -170,15 +171,26 @@ init_gl(void)
 		GL_STATIC_DRAW     // usage hint
 	);
 
-	// enable one attribute array, use it for vertex positions
+	// specify position attributes array
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(
-		0,         // attribute index
-		3,         // number of attribute components, max is 4
-		GL_FLOAT,  // each component is a float
-		GL_FALSE,  // do not normalize data
-		0,         // stride, 0 stands for tightly packed data
-		(void*)0   // offset in machine units (bytes)
+		0,                   // vertex attribute index (layout = 0)
+		3,                   // number of components, 3 for XYZ
+		GL_FLOAT,            // each component is a float
+		GL_FALSE,            // do not normalize data
+		sizeof(GLfloat) * 6, // stride between attributes
+		(void*)0             // vertex positions start at offset 0
+	);
+
+	// specify color attributes array
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(
+		1,                           // color attribute index (layout=1)
+		3,                           // number of components, 3 for RGB
+		GL_FLOAT,                    // each component is a float
+		GL_FALSE,                    // do not normalize data
+		sizeof(GLfloat) * 6,         // stride between attributes
+		(void*)(sizeof(GLfloat) * 3) // vertex colors have an offset!
 	);
 
 	// unbind the VAO
