@@ -66,7 +66,17 @@ init(unsigned width, unsigned height, SDL_Window **win, SDL_GLContext **ctx)
 	printf("GLSL version: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 	printf("GLEW version: %s\n", glewGetString(GLEW_VERSION));
 
+	// one-time OpenGL state machine initializations
+	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+
 	return 1;
+}
+
+static void
+render(void)
+{
+	// clear color and depth buffers
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 int
@@ -90,6 +100,9 @@ main(int argc, char *argv[])
 				break;
 			}
 		}
+
+		render();
+		SDL_GL_SwapWindow(win);
 	}
 
 	shutdown(win, ctx);
