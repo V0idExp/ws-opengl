@@ -7,7 +7,7 @@
 #define HEIGHT 600
 
 static void
-shutdown_sdl(SDL_Window *win, SDL_GLContext *ctx)
+shutdown(SDL_Window *win, SDL_GLContext *ctx)
 {
 	if (ctx) {
 		SDL_GL_DeleteContext(ctx);
@@ -21,7 +21,7 @@ shutdown_sdl(SDL_Window *win, SDL_GLContext *ctx)
 }
 
 static int
-init_sdl(unsigned width, unsigned height, SDL_Window **win, SDL_GLContext **ctx)
+init(unsigned width, unsigned height, SDL_Window **win, SDL_GLContext **ctx)
 {
 	// initialize SDL video subsystem
 	if (!SDL_WasInit(SDL_INIT_VIDEO) && SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -38,7 +38,7 @@ init_sdl(unsigned width, unsigned height, SDL_Window **win, SDL_GLContext **ctx)
 		SDL_WINDOW_OPENGL
 	);
 	if (!*win) {
-		shutdown_sdl(*win, *ctx);
+		shutdown(*win, *ctx);
 		return 0;
 	}
 
@@ -50,14 +50,14 @@ init_sdl(unsigned width, unsigned height, SDL_Window **win, SDL_GLContext **ctx)
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 	*ctx = SDL_GL_CreateContext(*win);
 	if (!*ctx) {
-		shutdown_sdl(*win, *ctx);
+		shutdown(*win, *ctx);
 		return 0;
 	}
 
 	// initialize GLEW
 	glewExperimental = GL_TRUE;
 	if (glewInit() != 0) {
-		shutdown_sdl(*win, *ctx);
+		shutdown(*win, *ctx);
 		return 0;
 	}
 	glGetError(); // silence any errors produced during GLEW initialization
@@ -74,7 +74,7 @@ main(int argc, char *argv[])
 {
 	SDL_Window *win = NULL;
 	SDL_GLContext *ctx = NULL;
-	if (!init_sdl(WIDTH, HEIGHT, &win, &ctx)) {
+	if (!init(WIDTH, HEIGHT, &win, &ctx)) {
 		return EXIT_FAILURE;
 	}
 
@@ -92,6 +92,6 @@ main(int argc, char *argv[])
 		}
 	}
 
-	shutdown_sdl(win, ctx);
+	shutdown(win, ctx);
 	return EXIT_SUCCESS;
 }
