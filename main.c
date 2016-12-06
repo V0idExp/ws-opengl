@@ -10,11 +10,22 @@ read_file(const char *filename);
 /*** DEFINES AND CONSTANTS ***/
 #define WIDTH 800
 #define HEIGHT 600
+#define MOVE_SPEED 1.0f
+
+enum {
+	MOVE_UP = 1,
+	MOVE_DOWN = 1 << 1,
+	MOVE_LEFT = 1 << 2,
+	MOVE_RIGHT = 1 << 3
+};
 
 /*** GLOBALS ***/
 static GLuint shader = 0;
 static GLuint vao = 0;
 static GLuint vbo = 0;
+
+static int action = 0;
+static GLfloat dx = 0.0f, dy = 0.0f;
 
 static void
 shutdown(SDL_Window *win, SDL_GLContext *ctx)
@@ -233,6 +244,53 @@ render(void)
 	assert(glGetError() == GL_NO_ERROR);
 }
 
+static void
+update(float dt)
+{
+	float dist = dt * MOVE_SPEED;
+	if (action & MOVE_LEFT) {
+		dx -= dist;
+	}
+	if (action & MOVE_RIGHT) {
+		dx += dist;
+	}
+	if (action & MOVE_UP) {
+		dy += dist;
+	}
+	if (action & MOVE_DOWN) {
+		dy -= dist;
+	}
+}
+
+static void
+handle_keyboard(SDL_KeyboardEvent *key, int is_press)
+{
+	int bit = 0;
+	switch (key->keysym.sym) {
+	case SDLK_a:
+	case SDLK_LEFT:
+		bit = MOVE_LEFT;
+		break;
+	case SDLK_d:
+	case SDLK_RIGHT:
+		bit = MOVE_RIGHT;
+		break;
+	case SDLK_w:
+	case SDLK_UP:
+		bit = MOVE_UP;
+		break;
+	case SDLK_s:
+	case SDLK_DOWN:
+		bit = MOVE_DOWN;
+	}
+
+	if (is_press) {
+		action |= bit;
+	} else {
+		action &= ~bit;
+	}
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -244,7 +302,12 @@ main(int argc, char *argv[])
 
 	int run = 1;
 	SDL_Event evt;
+	Uint32 last_update = SDL_GetTicks();
+	float dt = 0.0f;
 	while (run) {
+		// update the logic
+		update(dt);
+
 		while (SDL_PollEvent(&evt)) {
 			// quit on app close event or 'esc' key press
 			if (evt.type == SDL_QUIT || (
@@ -253,10 +316,20 @@ main(int argc, char *argv[])
 				run = 0;
 				break;
 			}
+			if (evt.type == SDL_KEYDOWN) {
+				handle_keyboard(&evt.key, 1);
+			} else if (evt.type == SDL_KEYUP) {
+				handle_keyboard(&evt.key, 0);
+			}
 		}
 
 		render();
 		SDL_GL_SwapWindow(win);
+
+		// compute time delta
+		Uint32 now = SDL_GetTicks();
+		dt = (now - last_update) / 1000.0f;
+		last_update = now;
 	}
 
 cleanup:
