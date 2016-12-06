@@ -233,6 +233,14 @@ render(void)
 	// NOTE: there always must be an active program before calling glDraw*()
 	glUseProgram(shader);
 
+	// introspect the shader program to find the uniform locations
+	GLint dx_loc = glGetUniformLocation(shader, "dx");
+	GLint dy_loc = glGetUniformLocation(shader, "dy");
+
+	// set the uniforms using their location indices
+	glUniform1f(dx_loc, dx);
+	glUniform1f(dy_loc, dy);
+
 	// bind a VAO
 	glBindVertexArray(vao);
 
