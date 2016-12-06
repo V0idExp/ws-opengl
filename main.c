@@ -8,6 +8,9 @@
 extern char*
 read_file(const char *filename);
 
+extern GLuint
+load_obj(const char *filename, unsigned int *num_triangles);
+
 /*** DEFINES AND CONSTANTS ***/
 #define WIDTH 800
 #define HEIGHT 600
@@ -27,6 +30,7 @@ enum {
 static GLuint shader = 0;
 static GLuint vao = 0;
 static GLuint vbo = 0;
+static GLuint triangles = 0;
 
 static int action = 0;
 
@@ -188,20 +192,11 @@ init_gl(void)
 	glBindVertexArray(vao);
 
 	// create, bind and fill with data a Vertex Buffer Object
-	GLfloat vertices[] = {
-		// vertex         // color
-		-0.3, -0.3, 0.0,  1.0, 0.0, 0.0,
-		+0.3, -0.3, 0.0,  0.0, 1.0, 0.0,
-		 0.0,  0.3, 0.0,  0.0, 0.0, 1.0,
-	};
-	glGenBuffers(1, &vbo);
+	if (!(vbo = load_obj("data/cube.obj", &triangles))) {
+		fprintf(stderr, "failed to load OBJ model\n");
+		return 0;
+	}
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(
-		GL_ARRAY_BUFFER,   // target buffer
-		sizeof(vertices),  // size in machine units (bytes)
-		vertices,          // data to submit
-		GL_STATIC_DRAW     // usage hint
-	);
 
 	// specify position attributes array
 	glEnableVertexAttribArray(0);
@@ -210,19 +205,8 @@ init_gl(void)
 		3,                   // number of components, 3 for XYZ
 		GL_FLOAT,            // each component is a float
 		GL_FALSE,            // do not normalize data
-		sizeof(GLfloat) * 6, // stride between attributes
+		0,                   // stride between attributes
 		(void*)0             // vertex positions start at offset 0
-	);
-
-	// specify color attributes array
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(
-		1,                           // color attribute index (layout=1)
-		3,                           // number of components, 3 for RGB
-		GL_FLOAT,                    // each component is a float
-		GL_FALSE,                    // do not normalize data
-		sizeof(GLfloat) * 6,         // stride between attributes
-		(void*)(sizeof(GLfloat) * 3) // vertex colors have an offset!
 	);
 
 	// unbind the VAO
@@ -265,7 +249,7 @@ render(void)
 
 	// draw it as a set of triangles
 	// try also GL_POINTS, GL_LINES, GL_LINES_STRIP, GL_LINES_LOOP
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glDrawArrays(GL_TRIANGLES, 0, triangles * 3);
 
 	// succeed or die!
 	assert(glGetError() == GL_NO_ERROR);
@@ -303,7 +287,7 @@ update(float dt)
 
 	// update model matrix
 	mat_ident(&model);
-	mat_scale(&model, 100, 100, 100);
+	mat_scale(&model, 50, 50, 50);
 	mat_rotate(&model, 0.0, 1.0, 0.0, angle);
 	mat_translate(&model, dx, dy, dz);
 
@@ -356,9 +340,12 @@ handle_keyboard(SDL_KeyboardEvent *key, int is_press)
 int
 main(int argc, char *argv[])
 {
+	int retcode = EXIT_SUCCESS;
 	SDL_Window *win = NULL;
 	SDL_GLContext *ctx = NULL;
 	if (!init(WIDTH, HEIGHT, &win, &ctx) || !init_gl()) {
+		fprintf(stderr, "initialization failed\n");
+		retcode = EXIT_FAILURE;
 		goto cleanup;
 	}
 
@@ -397,5 +384,5 @@ main(int argc, char *argv[])
 cleanup:
 	shutdown_gl();
 	shutdown(win, ctx);
-	return EXIT_SUCCESS;
+	return retcode;
 }
