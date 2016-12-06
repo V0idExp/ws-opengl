@@ -11,14 +11,16 @@ read_file(const char *filename);
 /*** DEFINES AND CONSTANTS ***/
 #define WIDTH 800
 #define HEIGHT 600
-#define MOVE_SPEED 1.0f
+#define MOVE_SPEED 100.0f
 #define ROT_SPEED M_PI
 
 enum {
 	MOVE_UP = 1,
 	MOVE_DOWN = 1 << 1,
 	MOVE_LEFT = 1 << 2,
-	MOVE_RIGHT = 1 << 3
+	MOVE_RIGHT = 1 << 3,
+	MOVE_FORWARD = 1 << 4,
+	MOVE_BACKWARD = 1 << 5,
 };
 
 /*** GLOBALS ***/
@@ -156,10 +158,18 @@ compile_shaders(const char *vert_source, const char *frag_source) {
 static int
 init_gl(void)
 {
-	// initialize MVP matrices to identity
+	// initialize model-view matrices
 	mat_ident(&model);
 	mat_ident(&view);
-	mat_ident(&projection);
+
+	// create a perspective projection matrix
+	mat_persp(
+		&projection,
+		60,
+		HEIGHT / (float)WIDTH,
+		100.0f,
+		1000.0f
+	);
 
 	// one-time OpenGL state machine initializations
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
@@ -264,7 +274,7 @@ render(void)
 static void
 update(float dt)
 {
-	static GLfloat dx = 0.0f, dy = 0.0f;
+	static GLfloat dx = 0.0f, dy = 0.0f, dz = 0.0f;
 	float dist = dt * MOVE_SPEED;
 	if (action & MOVE_LEFT) {
 		dx -= dist;
@@ -278,6 +288,12 @@ update(float dt)
 	if (action & MOVE_DOWN) {
 		dy -= dist;
 	}
+	if (action & MOVE_FORWARD) {
+		dz -= dist;
+	}
+	if (action & MOVE_BACKWARD) {
+		dz += dist;
+	}
 
 	static GLfloat angle = 0.0f;
 	angle += ROT_SPEED * dt;
@@ -287,11 +303,13 @@ update(float dt)
 
 	// update model matrix
 	mat_ident(&model);
+	mat_scale(&model, 100, 100, 100);
 	mat_rotate(&model, 0.0, 1.0, 0.0, angle);
-	mat_translate(&model, dx, dy, 0);
+	mat_translate(&model, dx, dy, dz);
 
 	// update view matrix
 	mat_ident(&view);
+	mat_translate(&view, 0, 0, -500);
 
 	// chain all transformations into MVP matrix
 	Mat modelview;
@@ -319,6 +337,12 @@ handle_keyboard(SDL_KeyboardEvent *key, int is_press)
 	case SDLK_s:
 	case SDLK_DOWN:
 		bit = MOVE_DOWN;
+	case SDLK_f:
+		bit = MOVE_FORWARD;
+		break;
+	case SDLK_b:
+		bit = MOVE_BACKWARD;
+		break;
 	}
 
 	if (is_press) {
