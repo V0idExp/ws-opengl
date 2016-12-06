@@ -1,3 +1,4 @@
+#include "matlib.h"
 #include <GL/glew.h>
 #include <SDL.h>
 #include <assert.h>
@@ -11,6 +12,7 @@ read_file(const char *filename);
 #define WIDTH 800
 #define HEIGHT 600
 #define MOVE_SPEED 1.0f
+#define ROT_SPEED M_PI
 
 enum {
 	MOVE_UP = 1,
@@ -25,7 +27,11 @@ static GLuint vao = 0;
 static GLuint vbo = 0;
 
 static int action = 0;
-static GLfloat dx = 0.0f, dy = 0.0f;
+
+static Mat model;
+static Mat view;
+static Mat projection;
+static Mat mvp;
 
 static void
 shutdown(SDL_Window *win, SDL_GLContext *ctx)
@@ -150,6 +156,11 @@ compile_shaders(const char *vert_source, const char *frag_source) {
 static int
 init_gl(void)
 {
+	// initialize MVP matrices to identity
+	mat_ident(&model);
+	mat_ident(&view);
+	mat_ident(&projection);
+
 	// one-time OpenGL state machine initializations
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 
@@ -234,12 +245,10 @@ render(void)
 	glUseProgram(shader);
 
 	// introspect the shader program to find the uniform locations
-	GLint dx_loc = glGetUniformLocation(shader, "dx");
-	GLint dy_loc = glGetUniformLocation(shader, "dy");
+	GLint mvp_loc = glGetUniformLocation(shader, "mvp");
 
 	// set the uniforms using their location indices
-	glUniform1f(dx_loc, dx);
-	glUniform1f(dy_loc, dy);
+	glUniformMatrix4fv(mvp_loc, 1, GL_TRUE, (GLfloat*)&mvp);
 
 	// bind a VAO
 	glBindVertexArray(vao);
@@ -255,6 +264,7 @@ render(void)
 static void
 update(float dt)
 {
+	static GLfloat dx = 0.0f, dy = 0.0f;
 	float dist = dt * MOVE_SPEED;
 	if (action & MOVE_LEFT) {
 		dx -= dist;
@@ -268,6 +278,25 @@ update(float dt)
 	if (action & MOVE_DOWN) {
 		dy -= dist;
 	}
+
+	static GLfloat angle = 0.0f;
+	angle += ROT_SPEED * dt;
+	if (angle >= 2 * M_PI) {
+		angle -= 2 * M_PI;
+	}
+
+	// update model matrix
+	mat_ident(&model);
+	mat_rotate(&model, 0.0, 1.0, 0.0, angle);
+	mat_translate(&model, dx, dy, 0);
+
+	// update view matrix
+	mat_ident(&view);
+
+	// chain all transformations into MVP matrix
+	Mat modelview;
+	mat_mul(&view, &model, &modelview);
+	mat_mul(&projection, &modelview, &mvp);
 }
 
 static void

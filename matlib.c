@@ -114,7 +114,7 @@ mat_scale(Mat *m, float sx, float sy, float sz)
 	sm.data[5] = sy;
 	sm.data[10] = sz;
 
-	mat_mul(m, &sm, &tmp);
+	mat_mul(&sm, m, &tmp);
 	*m = tmp;
 }
 
@@ -186,7 +186,7 @@ mat_translate(Mat *m, float tx, float ty, float tz)
 	tm.data[7] = ty;
 	tm.data[11] = tz;
 
-	mat_mul(m, &tm, &tmp);
+	mat_mul(&tm, m, &tmp);
 	*m = tmp;
 }
 
