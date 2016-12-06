@@ -154,8 +154,8 @@ init_gl(void)
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 
 	// read and compile shaders into a shader program
-	char *vert_src = read_file("data/color.vert");
-	char *frag_src = read_file("data/color.frag");
+	char *vert_src = read_file("data/default.vert");
+	char *frag_src = read_file("data/default.frag");
 	if (vert_src && frag_src) {
 		shader = compile_shaders(vert_src, frag_src);
 	}
