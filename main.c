@@ -337,6 +337,7 @@ handle_keyboard(SDL_KeyboardEvent *key, int is_press)
 	case SDLK_s:
 	case SDLK_DOWN:
 		bit = MOVE_DOWN;
+		break;
 	case SDLK_f:
 		bit = MOVE_FORWARD;
 		break;
