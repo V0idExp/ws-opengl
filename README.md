@@ -9,6 +9,6 @@ Workshop OpenGL
  * OpenGL state machine
  * Framebuffer, depth buffer, other buffers
  * VAOs & VBOs, creating and rendering primitives
- * Shaders
+ * Shaders, shader uniforms
  * Loading a mesh
  * Basic shading
