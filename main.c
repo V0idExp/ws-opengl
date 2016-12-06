@@ -166,7 +166,7 @@ init_gl(void)
 	mat_persp(
 		&projection,
 		60,
-		HEIGHT / (float)WIDTH,
+		WIDTH / (float)HEIGHT,
 		100.0f,
 		1000.0f
 	);
