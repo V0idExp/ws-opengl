@@ -198,7 +198,7 @@ init_gl(void)
 	glBindVertexArray(vao);
 
 	// create, bind and fill with data a Vertex Buffer Object
-	if (!(vbo = load_obj("data/cube.obj", &triangles))) {
+	if (!(vbo = load_obj("data/t-51.obj", &triangles))) {
 		fprintf(stderr, "failed to load OBJ model\n");
 		return 0;
 	}
@@ -230,7 +230,7 @@ init_gl(void)
 	// unbind the VAO
 	glBindVertexArray(0);
 
-	if (!(texture = load_texture("data/cube_texture.png", NULL, NULL))) {
+	if (!(texture = load_texture("data/t-51-diffuse.tga", NULL, NULL))) {
 		fprintf(stderr, "failed to load texture\n");
 		return 0;
 	}
@@ -321,7 +321,6 @@ update(float dt)
 	mat_ident(&model);
 	mat_scale(&model, 50, 50, 50);
 	mat_rotate(&model, 0.0, 1.0, 0.0, angle);
-	mat_rotate(&model, 1.0, 0.0, 0.0, angle);
 	mat_translate(&model, dx, dy, dz);
 
 	// update view matrix
