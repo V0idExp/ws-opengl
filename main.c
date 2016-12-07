@@ -11,11 +11,14 @@ read_file(const char *filename);
 extern GLuint
 load_obj(const char *filename, unsigned int *num_triangles);
 
+extern GLuint
+load_texture(const char *filename, unsigned *width, unsigned *height);
+
 /*** DEFINES AND CONSTANTS ***/
 #define WIDTH 800
 #define HEIGHT 600
 #define MOVE_SPEED 100.0f
-#define ROT_SPEED M_PI
+#define ROT_SPEED M_PI / 4.0
 
 enum {
 	MOVE_UP = 1,
@@ -30,6 +33,7 @@ enum {
 static GLuint shader = 0;
 static GLuint vao = 0;
 static GLuint vbo = 0;
+static GLuint texture = 0;
 static GLuint triangles = 0;
 
 static int action = 0;
@@ -177,6 +181,8 @@ init_gl(void)
 
 	// one-time OpenGL state machine initializations
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+	glEnable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
 
 	// read and compile shaders into a shader program
 	char *vert_src = read_file("data/default.vert");
@@ -199,23 +205,41 @@ init_gl(void)
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
 	// specify position attributes array
+	size_t vertex_size = sizeof(GLfloat) * 5; // XYZUV
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(
 		0,                   // vertex attribute index (layout = 0)
 		3,                   // number of components, 3 for XYZ
 		GL_FLOAT,            // each component is a float
 		GL_FALSE,            // do not normalize data
-		0,                   // stride between attributes
+		vertex_size,         // stride between attributes
 		(void*)0             // vertex positions start at offset 0
+	);
+
+	// specify UV attributes array
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(
+		1,                   // vertex attribute index (layout = 0)
+		2,                   // number of components, 2 for UV
+		GL_FLOAT,            // each component is a float
+		GL_FALSE,            // do not normalize data
+		vertex_size,         // stride between attributes
+		(void*)(sizeof(GLfloat) * 3)
 	);
 
 	// unbind the VAO
 	glBindVertexArray(0);
 
+	if (!(texture = load_texture("data/cube_texture.png", NULL, NULL))) {
+		fprintf(stderr, "failed to load texture\n");
+		return 0;
+	}
+
 	return (
 		shader != 0 &&
 		vao != 0 &&
 		vbo != 0 &&
+		texture != 0 &&
 		glGetError() == GL_NO_ERROR
 	);
 }
@@ -234,15 +258,23 @@ render(void)
 	// clear color and depth buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	GLint sampler = 0;
+
 	// activate shader
 	// NOTE: there always must be an active program before calling glDraw*()
 	glUseProgram(shader);
 
 	// introspect the shader program to find the uniform locations
 	GLint mvp_loc = glGetUniformLocation(shader, "mvp");
+	GLint tex_loc = glGetUniformLocation(shader, "tex");
 
 	// set the uniforms using their location indices
 	glUniformMatrix4fv(mvp_loc, 1, GL_TRUE, (GLfloat*)&mvp);
+	glUniform1i(tex_loc, sampler);
+
+	// make a texture unit active and bind the texture to it
+	glActiveTexture(GL_TEXTURE0 + sampler);
+	glBindTexture(GL_TEXTURE_2D, texture);
 
 	// bind a VAO
 	glBindVertexArray(vao);
@@ -289,6 +321,7 @@ update(float dt)
 	mat_ident(&model);
 	mat_scale(&model, 50, 50, 50);
 	mat_rotate(&model, 0.0, 1.0, 0.0, angle);
+	mat_rotate(&model, 1.0, 0.0, 0.0, angle);
 	mat_translate(&model, dx, dy, dz);
 
 	// update view matrix

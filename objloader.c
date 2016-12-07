@@ -29,7 +29,7 @@ load_obj(const char *filename, unsigned int *num_triangles)
 	struct aiMesh *mesh = scene->mMeshes[0];
 
 	// allocate and initialize an array of vertex data
-	size_t vertex_size = sizeof(GLfloat) * 3;
+	size_t vertex_size = sizeof(GLfloat) * 5;
 	size_t vdata_size = vertex_size * mesh->mNumFaces * 3;
 	GLfloat *vdata = malloc(vdata_size);
 	if (!vdata) {
@@ -37,12 +37,16 @@ load_obj(const char *filename, unsigned int *num_triangles)
 	}
 	for (unsigned int f = 0; f < mesh->mNumFaces; f++) {
 		struct aiFace face = mesh->mFaces[f];
-		size_t offset = f * 9;
+		size_t offset = f * 15;
 		for (short i = 0; i < 3; i++) {
 			struct aiVector3D v = mesh->mVertices[face.mIndices[i]];
-			vdata[offset + i * 3 + 0] = v.x;
-			vdata[offset + i * 3 + 1] = v.y;
-			vdata[offset + i * 3 + 2] = v.z;
+			vdata[offset + i * 5 + 0] = v.x;
+			vdata[offset + i * 5 + 1] = v.y;
+			vdata[offset + i * 5 + 2] = v.z;
+
+			struct aiVector3D t = mesh->mTextureCoords[0][face.mIndices[i]];
+			vdata[offset + i * 5 + 3] = t.x;
+			vdata[offset + i * 5 + 4] = t.y;
 		}
 	}
 
