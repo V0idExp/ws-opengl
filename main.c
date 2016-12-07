@@ -71,8 +71,8 @@ init(SDL_Window **win, SDL_GLContext **ctx)
 		"OpenGL demo",
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
-		width,
-		height,
+		0,
+		0,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN_DESKTOP
 	);
 	if (!*win) {
@@ -80,6 +80,7 @@ init(SDL_Window **win, SDL_GLContext **ctx)
 		return 0;
 	}
 	SDL_GetWindowSize(*win, &width, &height);
+	printf("Resolution: %dx%d\n", width, height);
 
 	// initialize OpenGL context
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -183,6 +184,7 @@ init_gl(void)
 	);
 
 	// one-time OpenGL state machine initializations
+	glViewport(0, 0, width, height);
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 	glEnable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
