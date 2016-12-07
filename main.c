@@ -15,8 +15,6 @@ extern GLuint
 load_texture(const char *filename, unsigned *width, unsigned *height);
 
 /*** DEFINES AND CONSTANTS ***/
-#define WIDTH 800
-#define HEIGHT 600
 #define MOVE_SPEED 100.0f
 #define ROT_SPEED M_PI / 4.0
 
@@ -30,6 +28,9 @@ enum {
 };
 
 /*** GLOBALS ***/
+int width = 0;
+int height = 0;
+
 static GLuint shader = 0;
 static GLuint vao = 0;
 static GLuint vbo = 0;
@@ -58,7 +59,7 @@ shutdown(SDL_Window *win, SDL_GLContext *ctx)
 }
 
 static int
-init(unsigned width, unsigned height, SDL_Window **win, SDL_GLContext **ctx)
+init(SDL_Window **win, SDL_GLContext **ctx)
 {
 	// initialize SDL video subsystem
 	if (!SDL_WasInit(SDL_INIT_VIDEO) && SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -72,12 +73,13 @@ init(unsigned width, unsigned height, SDL_Window **win, SDL_GLContext **ctx)
 		SDL_WINDOWPOS_CENTERED,
 		width,
 		height,
-		SDL_WINDOW_OPENGL
+		SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN_DESKTOP
 	);
 	if (!*win) {
 		shutdown(*win, *ctx);
 		return 0;
 	}
+	SDL_GetWindowSize(*win, &width, &height);
 
 	// initialize OpenGL context
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -85,6 +87,7 @@ init(unsigned width, unsigned height, SDL_Window **win, SDL_GLContext **ctx)
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 2);
 	*ctx = SDL_GL_CreateContext(*win);
 	if (!*ctx) {
 		shutdown(*win, *ctx);
@@ -174,7 +177,7 @@ init_gl(void)
 	mat_persp(
 		&projection,
 		60,
-		WIDTH / (float)HEIGHT,
+		width / (float)height,
 		100.0f,
 		1000.0f
 	);
@@ -183,6 +186,7 @@ init_gl(void)
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 	glEnable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_MULTISAMPLE);
 
 	// read and compile shaders into a shader program
 	char *vert_src = read_file("data/default.vert");
@@ -290,7 +294,7 @@ render(void)
 static void
 update(float dt)
 {
-	static GLfloat dx = 0.0f, dy = 0.0f, dz = 0.0f;
+	static GLfloat dx = 0.0f, dy = -90.0f, dz = 270.0f;
 	float dist = dt * MOVE_SPEED;
 	if (action & MOVE_LEFT) {
 		dx -= dist;
@@ -375,7 +379,7 @@ main(int argc, char *argv[])
 	int retcode = EXIT_SUCCESS;
 	SDL_Window *win = NULL;
 	SDL_GLContext *ctx = NULL;
-	if (!init(WIDTH, HEIGHT, &win, &ctx) || !init_gl()) {
+	if (!init(&win, &ctx) || !init_gl()) {
 		fprintf(stderr, "initialization failed\n");
 		retcode = EXIT_FAILURE;
 		goto cleanup;
